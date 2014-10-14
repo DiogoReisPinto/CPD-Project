@@ -14,10 +14,12 @@ void computeLCSResult(int** mat,char* stringA,char* stringB,int m,int n);
 /* Computes de LCS and prints its length and value to the output */
 void lcs( char *stringA, char *stringB, int m, int n )
 {
-   int **mat = (int **)malloc(m * sizeof(int*));
+   int **mat = (int **) malloc(sizeof(int *)* (m + 1));
    int i=0;
-   for(i = 0; i < n; i++) 
-      mat[i] = (int *)malloc(n * sizeof(int));
+
+   for(i = 0; i <= m; i++)
+      mat[i] = (int *) malloc(sizeof(int)* (n + 1));
+
    fillMatrixWithValues(mat,stringA,stringB,m,n);
    computeLCSResult(mat,stringA,stringB,m,n); 
 }
@@ -28,9 +30,9 @@ void lcs( char *stringA, char *stringB, int m, int n )
 void fillMatrixWithValues(int** mat,char* stringA,char* stringB, int lenA, int lenB){
    int i=0;
    int j=0;
-   for (i=0; i<=lenA; i++)
+   for (i=0; i <= lenA; i++)
    {
-     for (j=0; j<=lenB; j++)
+     for (j=0; j <= lenB; j++)
      {
        if (i == 0 || j == 0)
          mat[i][j] = 0;
@@ -49,6 +51,7 @@ void fillMatrixWithValues(int** mat,char* stringA,char* stringB, int lenA, int l
 /*Computes the LCS with the given matrix filled with the matching pattern*/
 void computeLCSResult(int** mat,char* stringA,char* stringB, int lenA, int lenB){
    int index = mat[lenA][lenB];
+
    char* lcs =(char*)malloc(sizeof(char)*(index+1)) ;
    lcs[index] = '\0'; 
    int i = lenA; 
@@ -71,7 +74,7 @@ void computeLCSResult(int** mat,char* stringA,char* stringB, int lenA, int lenB)
    printf("%d\n",lcsSize);
 
    // Print the lcs
-   printf("%s",lcs);
+   printf("%s\n",lcs);
 }
 
 
