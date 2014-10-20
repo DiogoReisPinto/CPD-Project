@@ -4,10 +4,14 @@
 #include <string.h>
 #include <math.h>
   
+
+  
+  
 int max(int a, int b);
 short cost(int x);
 void fillMatrixWithValues(int** mat,char* stringA,char* stringB,int m,int n);
 void computeLCSResult(int** mat,char* stringA,char* stringB,int m,int n);
+
 
 
 
@@ -42,7 +46,7 @@ void fillMatrixWithValues(int** mat,char* stringA,char* stringB, int lenA, int l
          mat[i][j] = 0;
        else if (stringA[i-1] == stringB[j-1]){
           mat[i][j] = mat[i-1][j-1] + 1;
-          cost(i); 
+          //cost(i); 
         }
        else
          mat[i][j] = max(mat[i-1][j], mat[i][j-1]);
@@ -105,7 +109,7 @@ int main(int argc, char *argv[])
 {
   if(argc!=2)
     return 0;
- 
+
   FILE *file = fopen(argv[1], "r" );
 
   if ( file == 0 )
@@ -114,27 +118,17 @@ int main(int argc, char *argv[])
   }
   else 
   {
-    /*Vai buscar a primeira linha com dois ints */
-    int A=0;
-    int B=0;
-    char *sizes = (char *) malloc(sizeof(char)*1000);
-    fgets(sizes,1000,file);
-    sscanf(sizes,"%d %d\n",&A,&B);
-    /*A e B guardam os valores de lenA e lenB. Ha algum problema porque eles mudam de valores nas linhas seguintes*/
-    int lenA = A;
-    int lenB = B;
-    char *stringA = (char *) malloc(sizeof(char)*(A+1));
-    char *stringB = (char *) malloc(sizeof(char)*(B+1));
-    char *barraN = (char *) malloc(sizeof(char)*2);
-    fgets(stringA,A+1,file);
-    fgets(barraN,2,file);
-    fgets(stringB,B+1,file); 
-    fclose( file );
+    int lenA=0;
+    int lenB=0;
+	 fscanf(file,"%d %d\n",&lenA,&lenB);
+	 char *stringA = (char *) malloc(sizeof(char)*(lenA+1));
+    char *stringB = (char *) malloc(sizeof(char)*(lenB+1));
+	 fscanf(file,"%s\n",stringA);
+	 fscanf(file,"%s\n",stringB);
+	 fclose( file );
     lcs( stringA, stringB, lenA, lenB );
-    free(sizes);
-    free(stringA);
+	 free(stringA);
     free(stringB);
-    free(barraN);
   }
   return 0;
 }
