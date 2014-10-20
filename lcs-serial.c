@@ -22,6 +22,10 @@ void lcs( char *stringA, char *stringB, int m, int n )
 
    fillMatrixWithValues(mat,stringA,stringB,m,n);
    computeLCSResult(mat,stringA,stringB,m,n); 
+
+   for(i = 0; i <= m; i++)
+      free(mat[i]);
+   free(mat);
 }
 
 
@@ -75,6 +79,7 @@ void computeLCSResult(int** mat,char* stringA,char* stringB, int lenA, int lenB)
 
    // Print the lcs
    printf("%s\n",lcs);
+   free(lcs);
 }
 
 
@@ -112,20 +117,24 @@ int main(int argc, char *argv[])
     /*Vai buscar a primeira linha com dois ints */
     int A=0;
     int B=0;
-    char sizes[1000];   
+    char *sizes = (char *) malloc(sizeof(char)*1000);
     fgets(sizes,1000,file);
     sscanf(sizes,"%d %d\n",&A,&B);
     /*A e B guardam os valores de lenA e lenB. Ha algum problema porque eles mudam de valores nas linhas seguintes*/
     int lenA = A;
     int lenB = B;
-    char stringA[A+1];
-    char stringB[B+1];
-    char barraN[1];
+    char *stringA = (char *) malloc(sizeof(char)*(A+1));
+    char *stringB = (char *) malloc(sizeof(char)*(B+1));
+    char *barraN = (char *) malloc(sizeof(char)*2);
     fgets(stringA,A+1,file);
     fgets(barraN,2,file);
     fgets(stringB,B+1,file); 
     fclose( file );
     lcs( stringA, stringB, lenA, lenB );
+    free(sizes);
+    free(stringA);
+    free(stringB);
+    free(barraN);
   }
   return 0;
 }
