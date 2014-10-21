@@ -1,6 +1,6 @@
 /* Dynamic Programming implementation of LCS problem */
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
   
@@ -36,24 +36,39 @@ void lcs( char *stringA, char *stringB, int m, int n )
 
 /*Fills the matrix with the matching pattern then used to compute the LCS*/
 void fillMatrixWithValues(int** mat,char* stringA,char* stringB, int lenA, int lenB){
-   int i=0;
-   int j=0;
-   for (i=0; i <= lenA; i++)
-   {
-     for (j=0; j <= lenB; j++)
-     {
-       if (i == 0 || j == 0)
-         mat[i][j] = 0;
-       else if (stringA[i-1] == stringB[j-1]){
+   int diagonalSize=0;
+   int k=0;
+   int iterations = lenA+lenB;
+   int diagonalLimit = 1;
+   int x=0;
+   int y=0;
+   for(k=0;k<=iterations;k++){
+      printf("Entering in iteration nr:%d\n",k);
+      for (diagonalSize=0; diagonalSize < diagonalLimit; diagonalSize++){
+        int j=diagonalSize;
+        int i =diagonalLimit - 1 - diagonalSize;
+        if(i>lenA || j>lenB)
+          continue;
+        else if (i == 0 || j == 0)
+          mat[i][j] = 0;
+        else if (stringA[i-1] == stringB[j-1]){
           mat[i][j] = mat[i-1][j-1] + 1;
           //cost(i); 
         }
-       else
-         mat[i][j] = max(mat[i-1][j], mat[i][j-1]);
-     }
-   }
+        else
+          mat[i][j] = max(mat[i-1][j], mat[i][j-1]);
+      }
+      diagonalLimit++;   
+  }
+  
+  for(y=0;y<=lenB;y++){
+    for(x=0;x<=lenA;x++){
+    
+      printf("%d ",mat[x][y]);
+    }
+    printf("\n");
+  }
 }
-
 
 
 /*Computes the LCS with the given matrix filled with the matching pattern*/
