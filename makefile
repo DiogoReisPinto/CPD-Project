@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS  = -Wall
-TARGET = lcs-serial
+CFLAGS  = -Wall -fopenmp -lm
+TARGET = lcs-omp
 all: $(TARGET)
 $(TARGET): $(TARGET).c
 	$(CC) $(CFLAGS) -o $(TARGET) $(TARGET).c

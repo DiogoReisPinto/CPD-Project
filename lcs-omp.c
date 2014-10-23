@@ -17,20 +17,21 @@ void computeLCSResult(int** mat,char* stringA,char* stringB,int m,int n);
 
 
 /* Computes de LCS and prints its length and value to the output */
-void lcs( char *stringA, char *stringB, int m, int n )
-{
+void lcs( char *stringA, char *stringB, int m, int n ){
    int **mat = (int **) malloc(sizeof(int *)* (m + 1));
    int i=0;
-
+   #pragma omp parallel{
+   #pragma omp for
    for(i = 0; i <= m; i++)
       mat[i] = (int *) malloc(sizeof(int)* (n + 1));
-
+  
    fillMatrixWithValues(mat,stringA,stringB,m,n);
-   computeLCSResult(mat,stringA,stringB,m,n); 
-
+   computeLCSResult(mat,stringA,stringB,m,n);
+   #pragma omp for
    for(i = 0; i <= m; i++)
       free(mat[i]);
    free(mat);
+ }
 }
 
 
@@ -123,6 +124,7 @@ int max(int a, int b)
 
 int main(int argc, char *argv[])
 {
+  double start = omp_get_wtime();
   if(argc!=2)
     return 0;
 
@@ -146,5 +148,8 @@ int main(int argc, char *argv[])
 	 free(stringA);
     free(stringB);
   }
+  double end = omp_get_wtime();
+  double processingTime = end-start;
+  printf("The processing time was %f", processingTime);
   return 0;
 }
