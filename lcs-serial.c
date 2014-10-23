@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
   
 
   
@@ -141,7 +142,7 @@ int main(int argc, char *argv[])
 	 fscanf(file,"%s\n",stringA);
 	 fscanf(file,"%s\n",stringB);
 	 fclose( file );
-    lcs( stringA, stringB, lenA, lenB );
+   lcs( stringA, stringB, lenA, lenB );
 	 free(stringA);
     free(stringB);
   }
