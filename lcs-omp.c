@@ -20,18 +20,16 @@ void computeLCSResult(int** mat,char* stringA,char* stringB,int m,int n);
 void lcs( char *stringA, char *stringB, int m, int n ){
    int **mat = (int **) malloc(sizeof(int *)* (m + 1));
    int i=0;
-   #pragma omp parallel{
-   #pragma omp for
-   for(i = 0; i <= m; i++)
+   #pragma omp parallel for
+   	for(i = 0; i <= m; i++)
       mat[i] = (int *) malloc(sizeof(int)* (n + 1));
-  
-   fillMatrixWithValues(mat,stringA,stringB,m,n);
-   computeLCSResult(mat,stringA,stringB,m,n);
-   #pragma omp for
-   for(i = 0; i <= m; i++)
+   		fillMatrixWithValues(mat,stringA,stringB,m,n);
+   		computeLCSResult(mat,stringA,stringB,m,n);
+
+   	#pragma omp parallel for
+   	for(i = 0; i <= m; i++)
       free(mat[i]);
-   free(mat);
- }
+  free(mat);
 }
 
 
@@ -42,10 +40,8 @@ void fillMatrixWithValues(int** mat,char* stringA,char* stringB, int lenA, int l
    int k=0;
    int iterations = lenA+lenB;
    int diagonalLimit = 1;
-   int x=0;
-   int y=0;
    for(k=0;k<=iterations;k++){
-      printf("Entering in iteration nr:%d\n",k);
+    #pragma omp parallel for
       for (diagonalSize=0; diagonalSize < diagonalLimit; diagonalSize++){
         int j=diagonalSize;
         int i =diagonalLimit - 1 - diagonalSize;
@@ -55,7 +51,7 @@ void fillMatrixWithValues(int** mat,char* stringA,char* stringB, int lenA, int l
           mat[i][j] = 0;
         else if (stringA[i-1] == stringB[j-1]){
           mat[i][j] = mat[i-1][j-1] + 1;
-          //cost(i); 
+          cost(i); 
         }
         else
           mat[i][j] = max(mat[i-1][j], mat[i][j-1]);
@@ -63,13 +59,13 @@ void fillMatrixWithValues(int** mat,char* stringA,char* stringB, int lenA, int l
       diagonalLimit++;   
   }
   
-  for(y=0;y<=lenB;y++){
+  /*for(y=0;y<=lenB;y++){
     for(x=0;x<=lenA;x++){
     
       printf("%d ",mat[x][y]);
     }
     printf("\n");
-  }
+  }*/
 }
 
 
@@ -150,6 +146,6 @@ int main(int argc, char *argv[])
   }
   double end = omp_get_wtime();
   double processingTime = end-start;
-  printf("The processing time was %f", processingTime);
+  printf("The processing time was %f\n", processingTime);
   return 0;
 }
