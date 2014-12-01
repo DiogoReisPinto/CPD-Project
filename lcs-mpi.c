@@ -245,7 +245,7 @@ void computeLCSResult(int**mat,int* numLines,int* offsetLines,char* stringA,char
 
 
 int main(int argc, char *argv[]){
-	
+	double start, end;
 	int lenA=0;
 	int lenB=0;
 	int id, p;
@@ -257,6 +257,7 @@ int main(int argc, char *argv[]){
     MPI_Comm_rank (MPI_COMM_WORLD, &id);
     MPI_Comm_size (MPI_COMM_WORLD, &p);
     MPI_Barrier (MPI_COMM_WORLD);
+    start = MPI_Wtime();
 	if(id == MASTER){
 		FILE *file = fopen(argv[1], "r" );
 		if ( file == 0 ){
@@ -273,6 +274,10 @@ int main(int argc, char *argv[]){
 	}
 	sendStringsToProcesses(&stringA,&stringB,&lenA,&lenB,id,p);
 	lcs(stringA,stringB,lenA,lenB,id,p);
+	end = MPI_Wtime();
 	MPI_Finalize();
+	if (id == MASTER) { 
+    printf("Runtime = %f\n", end-start);
+}
 	return 0;
 }
