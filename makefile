@@ -1,8 +1,11 @@
-CC = gcc
-CFLAGS  = -Wall
-TARGET = lcs-serial
+CC = mpicc
+CFLAGS  = -g -fopenmp -lm
+TARGET = lcs-mpi
 all: $(TARGET)
 $(TARGET): $(TARGET).c
 	$(CC) $(CFLAGS) -o $(TARGET) $(TARGET).c
 clean:
-	$(RM) $(TARGET)
+	$(RM) -r $(TARGET) lcs-mpi.dSYM
+
+run:
+	mpirun -np $(PROC) lcs-mpi $(TEST)
