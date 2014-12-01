@@ -99,8 +99,13 @@ void lcs(char* stringA,char* stringB,int lenA,int lenB,int id,int p){
 	fillMatrixWithValues(mat,pmat,numLines,numCols,offsetCols,offsetLines,stringA,stringB,lenA,lenB,id,p);
 	MPI_Barrier(MPI_COMM_WORLD);
 	computeLCSResult(mat,numLines,offsetLines,stringA,stringB,lenA,lenB,id,p);
-	
-	
+	free(mat);
+	free(pmat);
+	free(c);
+	free(numLines);
+    free(offsetLines);
+    free(numCols);
+    free(offsetCols);
 }
 
 //Divides matrix by lines using numLines and offsetLines arrays to store information of lines assigned to each process
@@ -193,6 +198,9 @@ void fillMatrixWithValues(int** mat,int**pmat, int *numLines, int *numCols, int*
 			lineReceiver++;
 		}
 	}
+	free(globalBuffer);
+	free(localBuffer);
+	free(previousLine);
 }
 
 //Distributed backtracking algorithm for discover the lcs size and string
@@ -241,6 +249,7 @@ void computeLCSResult(int**mat,int* numLines,int* offsetLines,char* stringA,char
 		}
 		printf("\n");fflush(stdout);
    	}
+   	free(lcs);
 }
 
 
@@ -279,5 +288,7 @@ int main(int argc, char *argv[]){
 	if (id == MASTER) { 
     printf("Runtime = %f\n", end-start);
 }
+	free(stringA);
+	free(stringB);
 	return 0;
 }
