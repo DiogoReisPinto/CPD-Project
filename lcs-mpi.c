@@ -7,15 +7,19 @@
 
 #define MASTER 0
 
+int numBlocks;
+
 
 short cost(int x);
 void createPMatrix(char * stringB,int lenB, char* c,int **pmat,int id,int p);
 void createP(int **pmat, char *c, char* stringB, int n,int id,int p);
 int getC(char c);
+void divideLinesByProcesses(int* numLines, int* offsetLines, int lenA,int id,int p);
 void divideColumsnByProcesses(int* numCols,int* offsetCols,int lenB,int id,int p);
-void createLocalMatrix(int** mat, int **pmat,int* numCols,int lenB,int id,int p);
-void fillMatrixWithValues(int** mat,int**pmat, int *numCols, int* offsetCols, char* stringA, char*stringB,int lenA, int lenB,int id,int p);
-void computeLCSResult(int**mat,int* numCols,int* offsetCols,char* stringA,char* stringB, int lenA,int lenB,int id,int p);
+void createLocalMatrix(int** mat, int **pmat,int* numLines,int lenB,int id,int p);
+void fillMatrixWithValues(int** mat,int**pmat, int *numLines, int *numCols, int* offsetCols,int* offsetLines, char* stringA, char*stringB,int lenA, int lenB,int id,int p);
+void computeLCSResult(int**mat,int* numLines,int* offsetLines,char* stringA,char* stringB, int lenA,int lenB,int id,int p);
+
 
 
 short cost(int x) {
@@ -84,33 +88,66 @@ void sendStringsToProcesses(char** stringA, char** stringB, int* lenA, int* lenB
 //Main point of project 
 void lcs(char* stringA,char* stringB,int lenA,int lenB,int id,int p){
 	int **mat;
+	int i;
 	int **pmat = (int**) malloc(sizeof(int *)*27);
 	char *c = (char *) malloc(sizeof(char)*27);
-	int *numCols = (int*) malloc(sizeof(int)*p);
-	int *offsetCols = (int*) malloc(sizeof(int)*p);
+	int *numCols = (int*) malloc(sizeof(int)*numBlocks);
+	int *offsetCols = (int*) malloc(sizeof(int)*numBlocks);
+	int *numLines = (int*) malloc(sizeof(int)*p);
+  int *offsetLines = (int*) malloc(sizeof(int)*p);
 	createPMatrix(stringB,lenB,c,pmat,id,p);
+	divideLinesByProcesses(numLines,offsetLines,lenA,id,p);
 	divideColumsnByProcesses(numCols,offsetCols,lenB,id,p);	
-	mat = (int **) malloc(sizeof(int *)* (lenA + 1));
-	createLocalMatrix(mat,pmat,numCols,lenA,id,p);
-	fillMatrixWithValues(mat,pmat,numCols,offsetCols,stringA,stringB,lenA,lenB,id,p);
+	mat = (int **) malloc(sizeof(int *)* (numLines[id] + 1));
+	createLocalMatrix(mat,pmat,numLines,lenB,id,p);
+	fillMatrixWithValues(mat,pmat,numLines,numCols,offsetLines,offsetCols,stringA,stringB,lenA,lenB,id,p);
 	MPI_Barrier(MPI_COMM_WORLD);
-	computeLCSResult(mat,numCols,offsetCols,stringA,stringB,lenA,lenB,id,p);
+	computeLCSResult(mat,numLines,offsetLines,stringA,stringB,lenA,lenB,id,p);
+	
+	MPI_Barrier(MPI_COMM_WORLD);
+	
+
+	for(i=0;i<numLines[id];i++)
+		free(mat[i]);
+	
+	for(i=0;i<27;i++)
+		free(pmat[i]);
+	
 	free(mat);
 	free(pmat);
 	free(c);
   free(numCols);
   free(offsetCols);
+	free(numLines);
+  free(offsetLines);
+}
+
+//Divides matrix by lines using numLines and offsetLines arrays to store information of lines assigned to each process
+void divideLinesByProcesses(int* numLines, int* offsetLines,int lenA,int id,int p){
+    int remLines=lenA%p; 
+    int sum=0;
+    int i;
+    // calculate send counts and displacements
+	for (i = 0; i < p; i++) {
+	    numLines[i] = lenA/p;
+	    if (remLines > 0) {
+	        numLines[i]++;
+	        remLines--;
+	    }
+	    offsetLines[i] = sum;
+	    sum += numLines[i];
+	}
 }
 
 
 //Divides matrix by columns using numCols and offsetCols arrays to store information of columns assigned to each process
 void divideColumsnByProcesses(int* numCols,int* offsetCols,int lenB,int id,int p){
-	int remCols=lenB%p; 
+	int remCols=lenB%numBlocks; 
 	int sum = 0;
 	int i;
 	// calculate send counts and displacements
-	for (i = 0; i < p; i++) {
-		numCols[i] = lenB/p;
+	for(i = 0; i < numBlocks; i++) {
+		numCols[i] = lenB/numBlocks;
 		if (remCols > 0) {
 			numCols[i]++;
 			remCols--;
@@ -121,80 +158,80 @@ void divideColumsnByProcesses(int* numCols,int* offsetCols,int lenB,int id,int p
 }
 
 //Creates the matrix subset that each process will store
-void createLocalMatrix(int** mat, int **pmat,int* numCols,int lenA,int id,int p){
+void createLocalMatrix(int** mat, int **pmat,int* numLines,int lenB,int id,int p){
 	int i,j;
-		for(i = 0; i <= lenA; i++) {
-			mat[i] = (int *) malloc(sizeof(int)* (numCols[id]+1));	
+	if(id == MASTER){
+		for(i = 0; i <= numLines[id]; i++) {
+			mat[i] = (int *) malloc(sizeof(int)* lenB+1);	
 			mat[i][0] = 0;
-		
+		}
+		for(j = 0; j <= lenB; j++) 
+			mat[0][j] = 0;
 	}
-		
-	for(j = 0; j <= numCols[id]; j++) 
-		mat[0][j] = 0;
-		
+	else{
+		for(i = 0; i <= numLines[id]; i++) {
+			mat[i] = (int *) malloc(sizeof(int)* lenB+1);	
+		}
+		for(j = 0; j <= lenB; j++) 
+			mat[0][j] = 0;
+	}
 }
  
 //Computes the whole matrix, making each process store a part of it and colect the processed columns by each process
-void fillMatrixWithValues(int** mat,int**pmat, int *numCols, int* offsetCols, char* stringA, char*stringB,int lenA, int lenB,int id,int p){
-    int i,j,t,s,w;
-    MPI_Status status;
-   	int* localBuffer = (int *) malloc(sizeof(int)* (numCols[id]));
-	  int* previousLine = (int *) calloc(numCols[id]+offsetCols[id]+1, sizeof(int) );
-
-	for(i = 1; i <= lenA ; i++){
+void fillMatrixWithValues(int** mat,int**pmat, int *numLines, int *numCols, int* offsetLines,int* offsetCols, char* stringA, char*stringB,int lenA, int lenB,int id,int p){
+	int i,n,j,t,s;
+	MPI_Status status;
+	 int* previousLine = (int *) calloc(lenB+1, sizeof(int) );
+	for(n = 0; n < numBlocks ; n++){
 		if(id!=MASTER){
-			MPI_Recv(&previousLine[1],  offsetCols[id], MPI_INT, id-1, i, MPI_COMM_WORLD, &status);
-			mat[i-1][0] = previousLine[offsetCols[id]];
+			MPI_Recv(&mat[0][offsetCols[n]+1], numCols[n], MPI_INT, id-1, n, MPI_COMM_WORLD, &status);
 		}
-		if(id != p-1)
-			MPI_Ssend(&previousLine[1], offsetCols[id+1], MPI_INT, id+1, i, MPI_COMM_WORLD);
 		
-		
-		for(j = offsetCols[id]+1; j <= offsetCols[id]+numCols[id]; j++) {
-			t = (0 - pmat[getC(stringA[i - 1])][j]) < 0 ? 1 : 0;
-			s = (0 - (previousLine[j]-t*previousLine[pmat[getC(stringA[i - 1])][j]-1])) < 0 ? 1 : 0;
-			if(stringA[i-1]==stringB[j-1])
-				cost(i);
-			mat[i][j-(offsetCols[id]+1)+1] = previousLine[j] + t*(s ^ 1);
-		}	
-		
-		memcpy(&previousLine[offsetCols[id]+1], &mat[i][1],  sizeof(int)* (numCols[id]));
-
+	
+		for(i=1;i<numLines[id]+1;i++){
+			for(j=offsetCols[n]+1;j<=offsetCols[n]+numCols[n];j++){
+				t = (0 - pmat[getC(stringA[offsetLines[id]+i - 1])][j]) < 0 ? 1 : 0;
+				s = (0 - (mat[i-1][j]-t*mat[i-1][pmat[getC(stringA[offsetLines[id]+i - 1])][j]-1])) < 0 ? 1 : 0;
+				if(stringA[offsetLines[id]+i-1]==stringB[j-1])
+					cost(i);
+				mat[i][j] = mat[i-1][j] + t*(s ^ 1);
+			}
 		}
-		mat[lenA][0] = previousLine[offsetCols[id]];	
-	free(localBuffer);
-	free(previousLine);
+		if(id != p-1){
+				MPI_Ssend(&mat[numLines[id]][offsetCols[n]+1], numCols[n], MPI_INT, id+1, n, MPI_COMM_WORLD);
+	
+		}
+	}
 }
 
 //Distributed backtracking algorithm for discover the lcs size and string
-void computeLCSResult(int**mat,int* numCols,int* offsetCols,char* stringA,char* stringB, int lenA,int lenB,int id,int p){
+void computeLCSResult(int**mat,int* numLines,int* offsetLines,char* stringA,char* stringB, int lenA,int lenB,int id,int p){
 	
 	MPI_Status status;
 	int lcsSize;
 	if(id==p-1){
-		lcsSize = mat[lenA][numCols[id]];
+		lcsSize = mat[numLines[id]][lenB]+1;
 	}
-
-	
 	MPI_Bcast(&lcsSize,1,MPI_INT,p-1,MPI_COMM_WORLD);
 	int data[2]={0,0};
 	char* lcs =(char*)malloc(sizeof(char)* (lcsSize+1)) ;
 	int index=lcsSize;
-	int i = lenA; 
-	int j = numCols[id];
+	int i = numLines[id]; 
+	int j = lenB;
 	lcs[index] = '\0';
 	if(id!=p-1){ 
 		MPI_Recv(&data,2, MPI_INT, id+1, 0, MPI_COMM_WORLD, &status);
 		MPI_Recv(&lcs[0],lcsSize, MPI_INT, id+1, 1, MPI_COMM_WORLD, &status);
 		index = data[1];
-		i=data[0];
+		j=data[0];
 	}
+	
 	while (i > 0 && j > 0)
 	{
-		if (stringA[i-1] == stringB[offsetCols[id]+j-1])
+		if (stringA[offsetLines[id]+(i-1)] == stringB[j-1])
 		{
-			printf("%c\n",stringA[i-1]);
-			lcs[index-1] = stringA[i-1]; 
+			
+			lcs[index-1] = stringA[offsetLines[id]+(i-1)]; 
 			i--; j--; index--;    
 			
 		}
@@ -203,20 +240,21 @@ void computeLCSResult(int**mat,int* numCols,int* offsetCols,char* stringA,char* 
 		else
 			j--;
 	}
-	data[0] = i;
+	data[0] = j;
 	data[1] = index;
-	
 	if(id != MASTER){
 		MPI_Send(&data,2, MPI_INT, id-1, 0, MPI_COMM_WORLD);
 		MPI_Send(&lcs[0],lcsSize, MPI_CHAR, id-1, 1, MPI_COMM_WORLD);
 	}else{
-		printf("%d\n", lcsSize);fflush(stdout);
-		for(i=0;i<lcsSize;i++){
+		printf("%d\n", lcsSize-1);fflush(stdout);
+		for(i=1;i<lcsSize;i++){
 			printf("%c",lcs[i]);fflush(stdout);
 		}
 		printf("\n");fflush(stdout);
 	}
+	
 	free(lcs);
+	
 }
 
 
@@ -246,9 +284,13 @@ int main(int argc, char *argv[]){
 		 	fscanf(file,"%s\n",stringA);
 		 	fscanf(file,"%s\n",stringB);
 		 	fclose( file );
-		}
+		}	
 	}
 	sendStringsToProcesses(&stringA,&stringB,&lenA,&lenB,id,p);
+	if(0.01*lenB<10)
+			numBlocks=4;
+		else
+			numBlocks=((0.01*lenB)/4)*p;
 	lcs(stringA,stringB,lenA,lenB,id,p);
 	end = MPI_Wtime();
 	MPI_Finalize();
