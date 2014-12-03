@@ -305,7 +305,7 @@ int main(int argc, char *argv[]){
 	if(0.01*lenB<10)
 			numBlocks=4;
 		else
-			numBlocks=((0.01*lenB)/4)*p;
+			numBlocks=((((0.01*lenB)/4)*p)/4);
 	lcs(stringA,stringB,lenA,lenB,id,p);
 	end = MPI_Wtime();
 	MPI_Finalize();
