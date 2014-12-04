@@ -217,6 +217,7 @@ void fillMatrixWithValues(int** mat,int**pmat, int *numLines, int *numCols, int*
 			
 		}
 	}
+	free(previousLine);
 }
 
 //Distributed backtracking algorithm for discover the lcs size and string
@@ -274,20 +275,17 @@ void computeLCSResult(int**mat,int* numLines,int* offsetLines,char* stringA,char
 
 
 int main(int argc, char *argv[]){
-	double start, end;
 	int lenA=0;
 	int lenB=0;
 	int id, p;
  	char *stringA;
 	char *stringB;
-	omp_set_num_threads(1);
 	if(argc!=2)
     	return 0;
     MPI_Init (&argc, &argv);
     MPI_Comm_rank (MPI_COMM_WORLD, &id);
     MPI_Comm_size (MPI_COMM_WORLD, &p);
     MPI_Barrier (MPI_COMM_WORLD);
-    start = MPI_Wtime();
 	if(id == MASTER){
 		FILE *file = fopen(argv[1], "r" );
 		if ( file == 0 ){
@@ -305,14 +303,14 @@ int main(int argc, char *argv[]){
 	sendStringsToProcesses(&stringA,&stringB,&lenA,&lenB,id,p);
 	if(0.01*lenB<10)
 			numBlocks=4;
-		else
-			numBlocks=0.0025*lenB;
+		else{
+			if(omp_get_max_threads() == 1)
+				numBlocks=0.0025*lenB*p;
+			else
+				numBlocks=0.0025*lenB;
+		}
 	lcs(stringA,stringB,lenA,lenB,id,p);
-	end = MPI_Wtime();
 	MPI_Finalize();
-	if (id == MASTER) { 
-    printf("Runtime = %f\n", end-start);
-}
 	free(stringA);
 	free(stringB);
 	return 0;
