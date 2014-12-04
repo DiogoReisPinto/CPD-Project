@@ -151,7 +151,7 @@ void divideColumsnByProcesses(int* numCols,int* offsetCols,int lenB,int id,int p
 	int remCols=lenB%numBlocks; 
 	int sum = 0;
 	int i;
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for(i = 0; i < numBlocks; i++) {
 		numCols[i] = lenB/numBlocks;
 		if (remCols > 0) {
@@ -280,6 +280,7 @@ int main(int argc, char *argv[]){
 	int id, p;
  	char *stringA;
 	char *stringB;
+	omp_set_num_threads(1);
 	if(argc!=2)
     	return 0;
     MPI_Init (&argc, &argv);
@@ -305,7 +306,7 @@ int main(int argc, char *argv[]){
 	if(0.01*lenB<10)
 			numBlocks=4;
 		else
-			numBlocks=((((0.01*lenB)/4)*p)/4);
+			numBlocks=0.0025*lenB;
 	lcs(stringA,stringB,lenA,lenB,id,p);
 	end = MPI_Wtime();
 	MPI_Finalize();

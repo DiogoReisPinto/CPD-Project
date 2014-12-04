@@ -1,5 +1,5 @@
 CC = mpicc
-CFLAGS  = 
+CFLAGS  = -fopenmp
 TARGET = lcs-mpi
 all: $(TARGET)
 $(TARGET): $(TARGET).c
